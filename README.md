@@ -1,6 +1,7 @@
 # sbl
 
-[STB-style](https://github.com/nothings/stb) single-header arena allocator for C/C++. <br>
+[STB-style](https://github.com/nothings/stb) STB-style single-header libraries written in C/C++. <br>
+
 If you're wondering, **SBL** stands for **Siput Biru Library**.
 <br>
 to create STB-style header refer to [https://github.com/nothings/stb/blob/master/docs/stb_howto.txt](https://github.com/nothings/stb/blob/master/docs/stb_howto.txt)
