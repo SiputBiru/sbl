@@ -6,4 +6,4 @@ right i only created 1 lib
 
 | Resource Type  | category | description |
 | :--- | :--- | :--- |
-| [sbl_area](sbl_area.h)   | utility | my way to create "proper" arena allocator |
+| [sbl_arena](sbl_arena.h)   | utility | my way to create "proper" arena allocator |
