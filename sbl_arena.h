@@ -1,63 +1,62 @@
-/*
- * ============================================================================
- * ARENA ALLOCATOR
+/* ============================================================================
+ * SBL ARENA ALLOCATOR (Siput Biru Library)
  * ============================================================================
  *
  * A fast, STB-style single-header arena allocator for C/C++.
  *
  * HOW TO USE THIS LIBRARY:
  *
- * 1. In EXACTLY ONE C or C++ source file, define ARENA_H_IMPLEMENTATION
+ * 1. In EXACTLY ONE C or C++ source file, define SBL_ARENA_IMPLEMENTATION
  * before including this header to create the actual implementation:
  *
- * #define ARENA_H_IMPLEMENTATION
- * #include "arena.h"
+ * #define SBL_ARENA_IMPLEMENTATION
+ * #include "sbl_arena.h"
  *
  * 2. In all other files, just include the header normally:
  *
- * #include "arena.h"
+ * #include "sbl_arena.h"
  *
  * BASIC USAGE EXAMPLE:
  *
- * Arena my_arena;
+ * SblArena my_arena;
  * // Initialize with a 1 Megabyte initial block
- * arena_init(&my_arena, 1024 * 1024);
+ * sbl_arena_init(&my_arena, 1024 * 1024);
  *
  * // Allocate using standard functions
- * void* raw_mem = arena_alloc(&my_arena, 256);
+ * void* raw_mem = sbl_arena_alloc(&my_arena, 256);
  *
  * // Allocate using helpful macros (type-safe, automatically calculates size)
- * Player* p = ARENA_PUSH_STRUCT(&my_arena, Player);
- * Vector3* positions = ARENA_PUSH_ARRAY_ZERO(&my_arena, Vector3, 100);
- * char* name_copy = ARENA_PUSH_STRING(&my_arena, "Level Boss");
+ * Player* p = SBL_ARENA_PUSH_STRUCT(&my_arena, Player);
+ * Vector3* positions = SBL_ARENA_PUSH_ARRAY_ZERO(&my_arena, Vector3, 100);
+ * char* name_copy = SBL_ARENA_PUSH_STRING(&my_arena, "Level Boss");
  *
  * // ... do work ...
  *
  * // Reset the arena (instantly "frees" all allocations, keeps memory for reuse)
- * arena_reset(&my_arena);
+ * sbl_arena_reset(&my_arena);
  *
  * // Free the underlying OS memory only when completely shutting down
- * arena_free(&my_arena);
+ * sbl_arena_free(&my_arena);
  *
  * THREAD-LOCAL USAGE:
  *
  * // Automatically initializes a 1MB arena for the current thread
- * Arena* ta = arena_get_thread();
- * void* temp_data = arena_alloc(ta, 512);
+ * SblArena* ta = sbl_arena_get_thread();
+ * void* temp_data = sbl_arena_alloc(ta, 512);
  *
  * // Call this at the end of your thread's frame/loop to wipe temporary data
- * arena_thread_reset();
+ * sbl_arena_thread_reset();
  *
  * CONFIGURATION MACROS:
  *
  * Define any of these BEFORE including the implementation to override defaults:
  *
- * #define ARENA_MALLOC(size)         my_custom_malloc(size)
- * #define ARENA_FREE(ptr)            my_custom_free(ptr)
- * #define ARENA_ASSERT(x)            my_custom_assert(x)
- * #define ARENA_MEMSET(ptr, val, sz) my_custom_memset(ptr, val, sz)
- * #define ARENA_MEMCPY(dst, src, sz) my_custom_memcpy(dst, src, sz)
- * #define ARENA_STATIC               // Make implementation private to the file
+ * #define SBL_ARENA_MALLOC(size)         my_custom_malloc(size)
+ * #define SBL_ARENA_FREE(ptr)            my_custom_free(ptr)
+ * #define SBL_ARENA_ASSERT(x)            my_custom_assert(x)
+ * #define SBL_ARENA_MEMSET(ptr, val, sz) my_custom_memset(ptr, val, sz)
+ * #define SBL_ARENA_MEMCPY(dst, src, sz) my_custom_memcpy(dst, src, sz)
+ * #define SBL_ARENA_STATIC               // Make implementation private to the file
  *
  * LICENSE:
  * See end of file for license information
@@ -73,7 +72,7 @@
 // STB-Style Configuration Macros
 // ----------------------------------------------------------------------------
 
-#ifdef ARENA_STATIC
+#ifdef SBL_ARENA_STATIC
 #define SBL_ARENA_DEF static
 #else
 #define SBL_ARENA_DEF extern
@@ -84,63 +83,64 @@ extern "C" {
 #endif
 
 // Allow to override the base OS allocator
-#ifndef ARENA_MALLOC
+#ifndef SBL_ARENA_MALLOC
 #include <stdlib.h>
-#define ARENA_MALLOC(sz) malloc(sz)
-#define ARENA_FREE(p) free(p)
+#define SBL_ARENA_MALLOC(sz) malloc(sz)
+#define SBL_ARENA_FREE(p) free(p)
 #endif
 
 // Allow to override assert
-#ifndef ARENA_ASSERT
+#ifndef SBL_ARENA_ASSERT
 #include <assert.h>
-#define ARENA_ASSERT(x) assert(x)
+#define SBL_ARENA_ASSERT(x) assert(x)
 #endif
 
 // Allow to override memset/memcpy
-#ifndef ARENA_MEMSET
+#ifndef SBL_ARENA_MEMSET
 #include <string.h>
-#define ARENA_MEMSET(ptr, val, sz) memset(ptr, val, sz)
-#define ARENA_MEMCPY(dst, src, sz) memcpy(dst, src, sz)
+#define SBL_ARENA_MEMSET(ptr, val, sz) memset(ptr, val, sz)
+#define SBL_ARENA_MEMCPY(dst, src, sz) memcpy(dst, src, sz)
 #endif
 
 // ----------------------------------------------------------------------------
 // API Macros & Types
 // ----------------------------------------------------------------------------
 
-#define ARENA_PUSH_STRUCT(arena, type) ((type*)arena_alloc((arena), sizeof(type)))
-#define ARENA_PUSH_STRUCT_ZERO(arena, type) ((type*)arena_alloc_zero((arena), sizeof(type)))
-#define ARENA_PUSH_ARRAY(arena, type, count) ((type*)arena_alloc((arena), sizeof(type) * (count)))
-#define ARENA_PUSH_ARRAY_ZERO(arena, type, count)                                                  \
-	((type*)arena_alloc_zero((arena), sizeof(type) * (count)))
+#define SBL_ARENA_PUSH_STRUCT(arena, type) ((type*)sbl_arena_alloc((arena), sizeof(type)))
+#define SBL_ARENA_PUSH_STRUCT_ZERO(arena, type) ((type*)sbl_arena_alloc_zero((arena), sizeof(type)))
+#define SBL_ARENA_PUSH_ARRAY(arena, type, count)                                                   \
+	((type*)sbl_arena_alloc((arena), sizeof(type) * (count)))
+#define SBL_ARENA_PUSH_ARRAY_ZERO(arena, type, count)                                              \
+	((type*)sbl_arena_alloc_zero((arena), sizeof(type) * (count)))
 
-#define ARENA_PUSH_STRING(arena, str)                                                              \
-	((char*)ARENA_MEMCPY(arena_alloc((arena), strlen(str) + 1), (str), strlen(str) + 1))
+#define SBL_ARENA_PUSH_STRING(arena, str)                                                          \
+	((char*)SBL_ARENA_MEMCPY(sbl_arena_alloc((arena), strlen(str) + 1), (str), strlen(str) + 1))
 
-typedef struct ArenaBlock {
+typedef struct SblArenaBlock {
 	uint8_t* memory;
 	uint64_t size;
 	uint64_t offset;
-	struct ArenaBlock* next;
-} ArenaBlock;
+	struct SblArenaBlock* next;
+} SblArenaBlock;
 
 typedef struct {
-	ArenaBlock* head;
-	ArenaBlock* current;
-} Arena;
+	SblArenaBlock* head;
+	SblArenaBlock* current;
+} SblArena;
 
 typedef struct {
-	ArenaBlock* block;
+	SblArenaBlock* block;
 	uint64_t offset;
-} ArenaMark;
+} SblArenaMark;
 
 // Thread-local arena (extern in header unless static)
-#ifndef ARENA_STATIC
+#ifndef SBL_ARENA_STATIC
 #if __STDC_VERSION__ >= 201112L
-extern _Thread_local Arena thread_arena;
-extern _Thread_local int thread_arena_initialized;
+extern _Thread_local SblArena sbl_thread_arena;
+extern _Thread_local int sbl_thread_arena_initialized;
 #else
-extern __thread Arena thread_arena;
-extern __thread int thread_arena_initialized;
+extern __thread SblArena sbl_thread_arena;
+extern __thread int sbl_thread_arena_initialized;
 #endif
 #endif
 
@@ -148,26 +148,26 @@ extern __thread int thread_arena_initialized;
 // Function Declarations
 // ----------------------------------------------------------------------------
 
-SBL_ARENA_DEF void arena_init(Arena* arena, uint64_t initial_size);
-SBL_ARENA_DEF void arena_free(Arena* arena);
+SBL_ARENA_DEF void sbl_arena_init(SblArena* arena, uint64_t initial_size);
+SBL_ARENA_DEF void sbl_arena_free(SblArena* arena);
 
-SBL_ARENA_DEF void* arena_alloc_align(Arena* arena, uint64_t size, uint64_t align);
-SBL_ARENA_DEF void* arena_alloc(Arena* arena, uint64_t size);
-SBL_ARENA_DEF void* arena_alloc_zero(Arena* arena, uint64_t size);
+SBL_ARENA_DEF void* sbl_arena_alloc_align(SblArena* arena, uint64_t size, uint64_t align);
+SBL_ARENA_DEF void* sbl_arena_alloc(SblArena* arena, uint64_t size);
+SBL_ARENA_DEF void* sbl_arena_alloc_zero(SblArena* arena, uint64_t size);
 
-SBL_ARENA_DEF ArenaMark arena_mark(Arena* arena);
-SBL_ARENA_DEF void arena_reset_to_mark(Arena* arena, ArenaMark mark);
-SBL_ARENA_DEF void arena_reset(Arena* arena);
-SBL_ARENA_DEF uint64_t arena_get_used(Arena* arena);
+SBL_ARENA_DEF SblArenaMark sbl_arena_mark(SblArena* arena);
+SBL_ARENA_DEF void sbl_arena_reset_to_mark(SblArena* arena, SblArenaMark mark);
+SBL_ARENA_DEF void sbl_arena_reset(SblArena* arena);
+SBL_ARENA_DEF uint64_t sbl_arena_get_used(SblArena* arena);
 
-SBL_ARENA_DEF Arena* arena_get_thread(void);
-SBL_ARENA_DEF void arena_thread_reset(void);
+SBL_ARENA_DEF SblArena* sbl_arena_get_thread(void);
+SBL_ARENA_DEF void sbl_arena_thread_reset(void);
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif // ARENA_H
+#endif // SBL_ARENA_H
 
 // ============================================================
 // IMPLEMENTATION
@@ -181,22 +181,22 @@ extern "C" {
 
 // Thread-local definitions
 #if __STDC_VERSION__ >= 201112L
-_Thread_local Arena thread_arena;
-_Thread_local int thread_arena_initialized = 0;
+_Thread_local SblArena sbl_thread_arena;
+_Thread_local int sbl_thread_arena_initialized = 0;
 #else
-__thread Arena thread_arena;
-__thread int thread_arena_initialized = 0;
+__thread SblArena sbl_thread_arena;
+__thread int sbl_thread_arena_initialized = 0;
 #endif
 
 // Internal helpers (namespaced with double underscore)
-static uintptr_t arena__align_forward(uintptr_t ptr, uint64_t align) {
-	ARENA_ASSERT(align && ((align & (align - 1)) == 0));
+static uintptr_t sbl_arena__align_forward(uintptr_t ptr, uint64_t align) {
+	SBL_ARENA_ASSERT(align && ((align & (align - 1)) == 0));
 	return (ptr + align - 1) & ~((uintptr_t)align - 1);
 }
 
-static ArenaBlock* arena__block_create(uint64_t size) {
-	ArenaBlock* block = (ArenaBlock*)ARENA_MALLOC(sizeof(ArenaBlock) + size);
-	ARENA_ASSERT(block);
+static SblArenaBlock* sbl_arena__block_create(uint64_t size) {
+	SblArenaBlock* block = (SblArenaBlock*)SBL_ARENA_MALLOC(sizeof(SblArenaBlock) + size);
+	SBL_ARENA_ASSERT(block);
 
 	block->memory = (uint8_t*)(block + 1);
 	block->size = size;
@@ -206,28 +206,28 @@ static ArenaBlock* arena__block_create(uint64_t size) {
 	return block;
 }
 
-SBL_ARENA_DEF void arena_init(Arena* arena, uint64_t initial_size) {
-	arena->head = arena__block_create(initial_size);
+SBL_ARENA_DEF void sbl_arena_init(SblArena* arena, uint64_t initial_size) {
+	arena->head = sbl_arena__block_create(initial_size);
 	arena->current = arena->head;
 }
 
-SBL_ARENA_DEF void arena_free(Arena* arena) {
-	ArenaBlock* block = arena->head;
+SBL_ARENA_DEF void sbl_arena_free(SblArena* arena) {
+	SblArenaBlock* block = arena->head;
 	while (block) {
-		ArenaBlock* next = block->next;
-		ARENA_FREE(block);
+		SblArenaBlock* next = block->next;
+		SBL_ARENA_FREE(block);
 		block = next;
 	}
 	arena->head = NULL;
 	arena->current = NULL;
 }
 
-SBL_ARENA_DEF uint64_t arena_get_used(Arena* arena) {
+SBL_ARENA_DEF uint64_t sbl_arena_get_used(SblArena* arena) {
 	if (!arena || !arena->head)
 		return 0;
 
 	uint64_t total_used = 0;
-	ArenaBlock* block = arena->head;
+	SblArenaBlock* block = arena->head;
 
 	while (block) {
 		total_used += block->offset;
@@ -238,14 +238,14 @@ SBL_ARENA_DEF uint64_t arena_get_used(Arena* arena) {
 	return total_used;
 }
 
-SBL_ARENA_DEF void* arena_alloc_align(Arena* arena, uint64_t size, uint64_t align) {
-	ARENA_ASSERT(size > 0);
+SBL_ARENA_DEF void* sbl_arena_alloc_align(SblArena* arena, uint64_t size, uint64_t align) {
+	SBL_ARENA_ASSERT(size > 0);
 
-	ArenaBlock* block = arena->current;
+	SblArenaBlock* block = arena->current;
 
 	while (block) {
 		uintptr_t current_ptr = (uintptr_t)(block->memory + block->offset);
-		uintptr_t aligned_ptr = arena__align_forward(current_ptr, align);
+		uintptr_t aligned_ptr = sbl_arena__align_forward(current_ptr, align);
 		uint64_t adjustment = (uint64_t)(aligned_ptr - current_ptr);
 
 		if ((block->offset + adjustment + size) <= block->size) {
@@ -267,11 +267,11 @@ SBL_ARENA_DEF void* arena_alloc_align(Arena* arena, uint64_t size, uint64_t alig
 		new_size = size + align;
 	}
 
-	block->next = arena__block_create(new_size);
+	block->next = sbl_arena__block_create(new_size);
 	block = block->next;
 
 	uintptr_t ptr = (uintptr_t)(block->memory);
-	uintptr_t aligned_ptr = arena__align_forward(ptr, align);
+	uintptr_t aligned_ptr = sbl_arena__align_forward(ptr, align);
 	uint64_t adjustment = (uint64_t)(aligned_ptr - ptr);
 
 	block->offset = adjustment + size;
@@ -280,26 +280,26 @@ SBL_ARENA_DEF void* arena_alloc_align(Arena* arena, uint64_t size, uint64_t alig
 	return (void*)(block->memory + adjustment);
 }
 
-SBL_ARENA_DEF void* arena_alloc(Arena* arena, uint64_t size) {
-	return arena_alloc_align(arena, size, 16);
+SBL_ARENA_DEF void* sbl_arena_alloc(SblArena* arena, uint64_t size) {
+	return sbl_arena_alloc_align(arena, size, 16);
 }
 
-SBL_ARENA_DEF void* arena_alloc_zero(Arena* arena, uint64_t size) {
-	void* ptr = arena_alloc(arena, size);
-	ARENA_MEMSET(ptr, 0, size);
+SBL_ARENA_DEF void* sbl_arena_alloc_zero(SblArena* arena, uint64_t size) {
+	void* ptr = sbl_arena_alloc(arena, size);
+	SBL_ARENA_MEMSET(ptr, 0, size);
 	return ptr;
 }
 
-SBL_ARENA_DEF ArenaMark arena_mark(Arena* arena) {
-	ArenaMark mark;
+SBL_ARENA_DEF SblArenaMark sbl_arena_mark(SblArena* arena) {
+	SblArenaMark mark;
 	mark.block = arena->current;
 	mark.offset = arena->current->offset;
 	return mark;
 }
 
-SBL_ARENA_DEF void arena_reset_to_mark(Arena* arena, ArenaMark mark) {
+SBL_ARENA_DEF void sbl_arena_reset_to_mark(SblArena* arena, SblArenaMark mark) {
 	mark.block->offset = mark.offset;
-	ArenaBlock* block = mark.block->next;
+	SblArenaBlock* block = mark.block->next;
 	while (block) {
 		block->offset = 0;
 		block = block->next;
@@ -307,10 +307,10 @@ SBL_ARENA_DEF void arena_reset_to_mark(Arena* arena, ArenaMark mark) {
 	arena->current = mark.block;
 }
 
-SBL_ARENA_DEF void arena_reset(Arena* arena) {
+SBL_ARENA_DEF void sbl_arena_reset(SblArena* arena) {
 	if (!arena->head)
 		return;
-	ArenaBlock* block = arena->head;
+	SblArenaBlock* block = arena->head;
 	while (block) {
 		block->offset = 0;
 		block = block->next;
@@ -318,17 +318,17 @@ SBL_ARENA_DEF void arena_reset(Arena* arena) {
 	arena->current = arena->head;
 }
 
-SBL_ARENA_DEF Arena* arena_get_thread(void) {
-	if (!thread_arena_initialized) {
-		arena_init(&thread_arena, 1024 * 1024);
-		thread_arena_initialized = 1;
+SBL_ARENA_DEF SblArena* sbl_arena_get_thread(void) {
+	if (!sbl_thread_arena_initialized) {
+		sbl_arena_init(&sbl_thread_arena, 1024 * 1024);
+		sbl_thread_arena_initialized = 1;
 	}
-	return &thread_arena;
+	return &sbl_thread_arena;
 }
 
-SBL_ARENA_DEF void arena_thread_reset(void) {
-	if (thread_arena_initialized) {
-		arena_reset(&thread_arena);
+SBL_ARENA_DEF void sbl_arena_thread_reset(void) {
+	if (sbl_thread_arena_initialized) {
+		sbl_arena_reset(&sbl_thread_arena);
 	}
 }
 
@@ -351,14 +351,14 @@ SBL_ARENA_DEF void arena_thread_reset(void) {
  * Permission is granted to anyone to use this software for any purpose, including commercial
  * applications, and to alter it and redistribute it freely, subject to the following restrictions:
  *
- *   1. The origin of this software must not be misrepresented; you must not claim that you
- *   wrote the original software. If you use this software in a product, an acknowledgment
- *   in the product documentation would be appreciated but is not required.
+ * 1. The origin of this software must not be misrepresented; you must not claim that you
+ * wrote the original software. If you use this software in a product, an acknowledgment
+ * in the product documentation would be appreciated but is not required.
  *
- *   2. Altered source versions must be plainly marked as such, and must not be misrepresented
- *   as being the original software.
+ * 2. Altered source versions must be plainly marked as such, and must not be misrepresented
+ * as being the original software.
  *
- *   3. This notice may not be removed or altered from any source distribution.
+ * 3. This notice may not be removed or altered from any source distribution.
  * ------------------------------------------------------------------------------
  * ALTERNATIVE B - Public Domain (www.unlicense.org)
  * This is free and unencumbered software released into the public domain.
