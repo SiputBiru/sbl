@@ -74,9 +74,9 @@
 // ----------------------------------------------------------------------------
 
 #ifdef ARENA_STATIC
-#define ARENA_DEF static
+#define SBL_ARENA_DEF static
 #else
-#define ARENA_DEF extern
+#define SBL_ARENA_DEF extern
 #endif
 
 #if defined(__cplusplus)
@@ -148,20 +148,20 @@ extern __thread int thread_arena_initialized;
 // Function Declarations
 // ----------------------------------------------------------------------------
 
-ARENA_DEF void arena_init(Arena* arena, uint64_t initial_size);
-ARENA_DEF void arena_free(Arena* arena);
+SBL_ARENA_DEF void arena_init(Arena* arena, uint64_t initial_size);
+SBL_ARENA_DEF void arena_free(Arena* arena);
 
-ARENA_DEF void* arena_alloc_align(Arena* arena, uint64_t size, uint64_t align);
-ARENA_DEF void* arena_alloc(Arena* arena, uint64_t size);
-ARENA_DEF void* arena_alloc_zero(Arena* arena, uint64_t size);
+SBL_ARENA_DEF void* arena_alloc_align(Arena* arena, uint64_t size, uint64_t align);
+SBL_ARENA_DEF void* arena_alloc(Arena* arena, uint64_t size);
+SBL_ARENA_DEF void* arena_alloc_zero(Arena* arena, uint64_t size);
 
-ARENA_DEF ArenaMark arena_mark(Arena* arena);
-ARENA_DEF void arena_reset_to_mark(Arena* arena, ArenaMark mark);
-ARENA_DEF void arena_reset(Arena* arena);
-ARENA_DEF uint64_t arena_get_used(Arena* arena);
+SBL_ARENA_DEF ArenaMark arena_mark(Arena* arena);
+SBL_ARENA_DEF void arena_reset_to_mark(Arena* arena, ArenaMark mark);
+SBL_ARENA_DEF void arena_reset(Arena* arena);
+SBL_ARENA_DEF uint64_t arena_get_used(Arena* arena);
 
-ARENA_DEF Arena* arena_get_thread(void);
-ARENA_DEF void arena_thread_reset(void);
+SBL_ARENA_DEF Arena* arena_get_thread(void);
+SBL_ARENA_DEF void arena_thread_reset(void);
 
 #if defined(__cplusplus)
 }
@@ -206,12 +206,12 @@ static ArenaBlock* arena__block_create(uint64_t size) {
 	return block;
 }
 
-ARENA_DEF void arena_init(Arena* arena, uint64_t initial_size) {
+SBL_ARENA_DEF void arena_init(Arena* arena, uint64_t initial_size) {
 	arena->head = arena__block_create(initial_size);
 	arena->current = arena->head;
 }
 
-ARENA_DEF void arena_free(Arena* arena) {
+SBL_ARENA_DEF void arena_free(Arena* arena) {
 	ArenaBlock* block = arena->head;
 	while (block) {
 		ArenaBlock* next = block->next;
@@ -222,7 +222,7 @@ ARENA_DEF void arena_free(Arena* arena) {
 	arena->current = NULL;
 }
 
-ARENA_DEF uint64_t arena_get_used(Arena* arena) {
+SBL_ARENA_DEF uint64_t arena_get_used(Arena* arena) {
 	if (!arena || !arena->head)
 		return 0;
 
@@ -238,7 +238,7 @@ ARENA_DEF uint64_t arena_get_used(Arena* arena) {
 	return total_used;
 }
 
-ARENA_DEF void* arena_alloc_align(Arena* arena, uint64_t size, uint64_t align) {
+SBL_ARENA_DEF void* arena_alloc_align(Arena* arena, uint64_t size, uint64_t align) {
 	ARENA_ASSERT(size > 0);
 
 	ArenaBlock* block = arena->current;
@@ -280,24 +280,24 @@ ARENA_DEF void* arena_alloc_align(Arena* arena, uint64_t size, uint64_t align) {
 	return (void*)(block->memory + adjustment);
 }
 
-ARENA_DEF void* arena_alloc(Arena* arena, uint64_t size) {
+SBL_ARENA_DEF void* arena_alloc(Arena* arena, uint64_t size) {
 	return arena_alloc_align(arena, size, 16);
 }
 
-ARENA_DEF void* arena_alloc_zero(Arena* arena, uint64_t size) {
+SBL_ARENA_DEF void* arena_alloc_zero(Arena* arena, uint64_t size) {
 	void* ptr = arena_alloc(arena, size);
 	ARENA_MEMSET(ptr, 0, size);
 	return ptr;
 }
 
-ARENA_DEF ArenaMark arena_mark(Arena* arena) {
+SBL_ARENA_DEF ArenaMark arena_mark(Arena* arena) {
 	ArenaMark mark;
 	mark.block = arena->current;
 	mark.offset = arena->current->offset;
 	return mark;
 }
 
-ARENA_DEF void arena_reset_to_mark(Arena* arena, ArenaMark mark) {
+SBL_ARENA_DEF void arena_reset_to_mark(Arena* arena, ArenaMark mark) {
 	mark.block->offset = mark.offset;
 	ArenaBlock* block = mark.block->next;
 	while (block) {
@@ -307,7 +307,7 @@ ARENA_DEF void arena_reset_to_mark(Arena* arena, ArenaMark mark) {
 	arena->current = mark.block;
 }
 
-ARENA_DEF void arena_reset(Arena* arena) {
+SBL_ARENA_DEF void arena_reset(Arena* arena) {
 	if (!arena->head)
 		return;
 	ArenaBlock* block = arena->head;
@@ -318,7 +318,7 @@ ARENA_DEF void arena_reset(Arena* arena) {
 	arena->current = arena->head;
 }
 
-ARENA_DEF Arena* arena_get_thread(void) {
+SBL_ARENA_DEF Arena* arena_get_thread(void) {
 	if (!thread_arena_initialized) {
 		arena_init(&thread_arena, 1024 * 1024);
 		thread_arena_initialized = 1;
@@ -326,7 +326,7 @@ ARENA_DEF Arena* arena_get_thread(void) {
 	return &thread_arena;
 }
 
-ARENA_DEF void arena_thread_reset(void) {
+SBL_ARENA_DEF void arena_thread_reset(void) {
 	if (thread_arena_initialized) {
 		arena_reset(&thread_arena);
 	}
